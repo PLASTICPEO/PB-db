@@ -5,9 +5,9 @@ if (process.argv.length < 3) {
   process.exit(1);
 }
 
-const password = "e-commerce";
+const password = process.argv[2];
 
-const url = `mongodb+srv://e-commerce:e-commerce@phonebook.sqmzhzh.mongodb.net/?retryWrites=true&w=majority`;
+const url = `mongodb+srv://e-commerce:${password}@phonebook.sqmzhzh.mongodb.net/?retryWrites=true&w=majority`;
 
 mongoose.set("strictQuery", false);
 mongoose.connect(url);

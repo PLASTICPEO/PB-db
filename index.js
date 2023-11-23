@@ -58,8 +58,8 @@ app.get("/", (request, response) => {
 
 // Route to get all notes
 app.get("/api/notes", (request, response) => {
-  Note.find({}).then((quotes) => {
-    res.status(200).send(quotes.filter((quote) => quote));
+  Note.find({}).then((notes) => {
+    response.json(notes);
   });
 });
 
