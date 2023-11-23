@@ -7,6 +7,13 @@ const app = express();
 
 const Note = require("./models/note");
 
+const mongoose = require("mongoose");
+
+const url = process.env.MONGODB_URI;
+
+mongoose.set("strictQuery", false);
+mongoose.connect(url);
+
 // Middleware for logging requests
 const requestLogger = (request, response, next) => {
   console.log("Method:", request.method);
