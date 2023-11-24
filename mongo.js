@@ -35,3 +35,23 @@ Note.find({}).then((result) => {
   });
   mongoose.connection.close();
 });
+
+const userSchema = new mongoose.Schema({
+  username: String,
+  password: String,
+  important: Boolean,
+});
+
+const User = mongoose.model("User", noteSchema);
+
+// note.save().then((result) => {
+//   console.log("note saved!");
+//   mongoose.connection.close();
+// });
+
+User.find({}).then((result) => {
+  result.forEach((user) => {
+    console.log(user);
+  });
+  mongoose.connection.close();
+});
