@@ -1,22 +1,22 @@
 const mongoose = require("mongoose");
-
-mongoose.set("strictQuery", false);
-
-const url = `mongodb+srv://e-commerce:e-commerce@phonebook.sqmzhzh.mongodb.net/?retryWrites=true&w=majority`;
-
-mongoose
-  .connect(url)
-  .then((result) => {
-    console.log("connected to MongoDB");
-  })
-  .catch((error) => {
-    console.log("error connecting to MongoDB:", error.message);
-  });
+const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema({
-  username: String,
-  password: String,
-  important: Boolean,
+  email: { type: String, required: true, unique: true },
+  username: { type: String, required: true },
+  password: { type: String, required: true },
+  important: { type: Boolean, default: false },
 });
 
-module.exports = mongoose.model("User", userSchema);
+// Hash the password before saving
+userSchema.pre("save", async function (next) {
+  const user = this;
+  if (user.isModified("password")) {
+    user.password = await bcrypt.hash(user.password, 10);
+  }
+  next();
+});
+
+const User = mongoose.model("User", userSchema);
+
+module.exports = User;

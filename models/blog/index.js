@@ -13,9 +13,13 @@ mongoose
     console.log("error connecting to MongoDB:", error.message);
   });
 
-const noteSchema = new mongoose.Schema({
-  content: String,
+const blogSchema = new mongoose.Schema({
+  category: String,
+  title: String,
+  article: String,
   important: Boolean,
 });
 
-module.exports = mongoose.model("Note", noteSchema);
+const Blog = mongoose.model("Blog", blogSchema);
+
+module.exports = Blog;
