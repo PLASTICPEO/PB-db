@@ -30,6 +30,11 @@ app.use("/api/auth", authRouter);
 app.use("/api/blog", blogRouter);
 app.use("/api/user", userRouter);
 
+// Route for the root path ("/")
+app.get("/", (request, response) => {
+  response.send("Welcome to the backend endpoint of Plastic Blog");
+});
+
 // Middleware to handle unknown endpoints
 const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: "unknown endpoint" });
