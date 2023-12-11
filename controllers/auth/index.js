@@ -21,7 +21,9 @@ const signIn = async (req, response) => {
     }
   } catch (error) {
     console.error(error);
-    response.status(500).json({ error: "Internal server error" });
+    response
+      .status(500)
+      .json({ error: error.message || "Internal server error" });
   }
 };
 
