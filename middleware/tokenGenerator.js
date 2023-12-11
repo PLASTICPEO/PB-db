@@ -1,8 +1,9 @@
 const jwt = require("jsonwebtoken");
 
 // Token generation
-const generateAccessToken = (user) => {
-  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
+const generateAccessToken = (payload) => {
+  const secretKey = process.env.JWT_SECRET; // Use your actual secret key
+  return jwt.sign(payload, secretKey, { expiresIn: "1h" }); // Adjust expiresIn as needed
 };
 
 module.exports = generateAccessToken;
