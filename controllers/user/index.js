@@ -44,6 +44,11 @@ const userCreate = async (request, response) => {
 
 // All users
 const getUSers = async (req, res) => {
+  const token = req.heades.authorization;
+
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized: Token missing" });
+  }
   User.find({}).then((blogs) => {
     res.json(blogs);
   });
@@ -51,6 +56,11 @@ const getUSers = async (req, res) => {
 
 // Find a user by ID
 const getSingleUser = async (req, res) => {
+  const token = req.heades.authorization;
+
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized: Token missing" });
+  }
   User.findById(req.params.id)
     .then((user) => {
       if (user) {

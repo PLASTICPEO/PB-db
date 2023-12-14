@@ -3,9 +3,14 @@ const Blog = require("../../models/blog/index");
 // Create new blog
 const createBlog = async (req, res) => {
   const body = req.body;
+  const token = req.heades.authorization;
 
-  if (body === undefined) {
-    return res.status(400).json({ error: "content missing" });
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized: Token missing" });
+  }
+
+  if (!body) {
+    return res.status(400).json({ error: "Content missing" });
   }
 
   const newBlog = new Blog({
@@ -22,6 +27,11 @@ const createBlog = async (req, res) => {
 
 // All blog
 const blogList = async (req, res) => {
+  const token = req.heades.authorization;
+
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized: Token missing" });
+  }
   Blog.find({}).then((blogs) => {
     res.json(blogs);
   });
@@ -29,6 +39,11 @@ const blogList = async (req, res) => {
 
 // Single blog
 const singleBlog = async (req, res) => {
+  const token = req.heades.authorization;
+
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized: Token missing" });
+  }
   Blog.findById(req.params.id)
     .then((note) => {
       if (note) {
@@ -47,6 +62,12 @@ const singleBlog = async (req, res) => {
 // Delete the blog
 const blogDelete = async (req, res) => {
   const blogId = req.params.id;
+
+  const token = req.heades.authorization;
+
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized: Token missing" });
+  }
 
   Blog.findByIdAndDelete(blogId)
     .then((deletedBlog) => {
