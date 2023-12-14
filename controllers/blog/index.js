@@ -3,7 +3,7 @@ const Blog = require("../../models/blog/index");
 // Create new blog
 const createBlog = async (req, res) => {
   const body = req.body;
-  const token = req.heades.authorization;
+  const token = req.headers.authorization;
 
   if (!token) {
     return res.status(401).json({ error: "Unauthorized: Token missing" });
