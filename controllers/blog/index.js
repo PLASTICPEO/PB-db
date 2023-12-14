@@ -20,9 +20,17 @@ const createBlog = async (req, res) => {
     important: body.important || false,
   });
 
-  newBlog.save().then((savedBlog) => {
-    res.json(savedBlog);
-  });
+  newBlog
+    .save()
+    .then((blog) => {
+      res.json({
+        title: blog.title,
+        status: "Blog added successfully",
+      });
+    })
+    .catch((error) => {
+      res.status(400).json(error);
+    });
 };
 
 // All blog
