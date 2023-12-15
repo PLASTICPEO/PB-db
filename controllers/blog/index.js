@@ -1,4 +1,6 @@
 const Blog = require("../../models/blog/index");
+const secretKey = process.env.JWT_SECRET;
+const jwt = require("jsonwebtoken");
 
 // Create new blog
 const createBlog = async (req, res) => {
@@ -13,24 +15,27 @@ const createBlog = async (req, res) => {
     return res.status(400).json({ error: "Content missing" });
   }
 
-  const newBlog = new Blog({
-    category: body.category,
-    title: body.title,
-    article: body.article,
-    important: body.important || false,
-  });
+  try {
+    // Decode the token to get user information
+    const decodedToken = jwt.verify(token, secretKey); // Replace with your actual secret key
 
-  newBlog
-    .save()
-    .then((blog) => {
-      res.json({
-        title: blog.title,
-        status: "Blog added successfully",
-      });
-    })
-    .catch((error) => {
-      res.status(400).json(error);
+    const newBlog = new Blog({
+      category: body.category,
+      title: body.title,
+      article: body.article,
+      important: body.important || false,
+      userId: decodedToken.userId, // Assuming the user ID is stored in the token
     });
+
+    const savedBlog = await newBlog.save();
+
+    res.json({
+      title: savedBlog.title,
+      status: "Blog added successfully",
+    });
+  } catch (error) {
+    res.status(400).json({ error: "Invalid token or other error" });
+  }
 };
 
 // All blog
