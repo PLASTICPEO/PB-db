@@ -15,19 +15,21 @@ const generateAccessToken = require("../../middleware/tokenGenerator");
 //     next();
 //   });
 // };
-
 const signIn = async (req, response) => {
   try {
     // Find the user by username
     const user = await User.findOne({ username: req.body.username });
-
+    console.log(user._id);
     if (
       user &&
       typeof req.body.password === "string" &&
       (await bcrypt.compare(req.body.password, user.password))
     ) {
       // Generate and return an access token
-      const accessToken = generateAccessToken({ username: user.username });
+      const accessToken = generateAccessToken({ userId: user._id.toString() });
+
+      console.log(user._id.toString(), " უსერი");
+
       response.json({ accessToken: accessToken });
     } else {
       response.status(401).json({ error: "Invalid username or password" });
@@ -39,7 +41,6 @@ const signIn = async (req, response) => {
       .json({ error: error.message || "Internal server error" });
   }
 };
-
 module.exports = {
   signIn,
 };

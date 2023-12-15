@@ -3,8 +3,9 @@
 const jwt = require("jsonwebtoken");
 
 const generateAccessToken = (user) => {
+  console.log(user.userId, "მიდლვეარში");
   const secretKey = process.env.JWT_SECRET;
-  return jwt.sign({ userId: user._id, username: user.username }, secretKey, {
+  return jwt.sign({ userId: user.userId, username: user.username }, secretKey, {
     expiresIn: "3h",
   });
 };

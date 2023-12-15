@@ -1,4 +1,5 @@
 const Blog = require("../../models/blog/index");
+const User = require("../../models/user/index");
 const secretKey = process.env.JWT_SECRET;
 const jwt = require("jsonwebtoken");
 
@@ -17,23 +18,28 @@ const createBlog = async (req, res) => {
 
   try {
     // Decode the token to get user information
-    const decodedToken = jwt.verify(token, secretKey); // Replace with your actual secret key
+    const decoded = jwt.verify(token, secretKey);
+    const user = await User.findById(decoded.userId);
+    console.log(user, "დეკოდირებული");
 
     const newBlog = new Blog({
       category: body.category,
       title: body.title,
       article: body.article,
       important: body.important || false,
-      userId: decodedToken.userId, // Assuming the user ID is stored in the token
+      userId: user, // Assuming the user ID is stored in the token
     });
 
     const savedBlog = await newBlog.save();
+    user.blogs = user.blogs.concat(savedBlog._id.toString());
+    await user.save();
 
     res.json({
-      title: savedBlog.title,
+      title: savedBlog,
       status: "Blog added successfully",
     });
   } catch (error) {
+    console.error("Token verification error:", error.message);
     res.status(400).json({ error: "Invalid token or other error" });
   }
 };
