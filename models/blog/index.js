@@ -17,6 +17,7 @@ const blogSchema = new mongoose.Schema({
   category: String,
   title: String,
   article: String,
+  userId: String,
   important: Boolean,
 });
 
