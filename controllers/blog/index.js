@@ -43,16 +43,31 @@ const createBlog = async (req, res) => {
   }
 };
 
-// All blog
+// Blog list
 const blogList = async (req, res) => {
   try {
-    const blogs = await Blog.find({}).populate("user", {
+    const token = req.headers.authorization; // Assuming the token is in the headers
+
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized: Token missing" });
+    }
+
+    const decoded = jwt.verify(token, secretKey);
+
+    // Assuming the user information is stored in the decoded token
+    const userId = decoded.userId;
+
+    // Fetch only the blogs that belong to the authenticated user
+    const blogs = await Blog.find({ user: userId }).populate("user", {
       username: 1,
       email: 1,
     });
 
     res.json(blogs);
   } catch (error) {
+    if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({ error: "Unauthorized: Invalid token" });
+    }
     res.status(500).json({ error: error.message });
   }
 };
