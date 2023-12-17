@@ -20,14 +20,13 @@ const createBlog = async (req, res) => {
     // Decode the token to get user information
     const decoded = jwt.verify(token, secretKey);
     const user = await User.findById(decoded.userId);
-    console.log(user, "დეკოდირებული");
 
     const newBlog = new Blog({
       category: body.category,
       title: body.title,
       article: body.article,
       important: body.important || false,
-      userId: user, // Assuming the user ID is stored in the token
+      user: user._id, // Change from userId to user
     });
 
     const savedBlog = await newBlog.save();
@@ -46,9 +45,16 @@ const createBlog = async (req, res) => {
 
 // All blog
 const blogList = async (req, res) => {
-  Blog.find({}).then((blogs) => {
+  try {
+    const blogs = await Blog.find({}).populate("user", {
+      username: 1,
+      email: 1,
+    });
+
     res.json(blogs);
-  });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 // Single blog
@@ -71,6 +77,8 @@ const singleBlog = async (req, res) => {
 // Delete the blog
 const blogDelete = async (req, res) => {
   const blogId = req.params.id;
+  const user = await User.findOne({ blogs: blogId });
+  await User.findByIdAndUpdate(user?._id, { $pull: { blogs: blogId } });
 
   Blog.findByIdAndDelete(blogId)
     .then((deletedBlog) => {

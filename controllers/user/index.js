@@ -49,9 +49,14 @@ const getUsers = async (req, res) => {
   if (!token) {
     return res.status(401).json({ error: "Unauthorized: Token missing" });
   }
-  User.find({}).then((users) => {
-    res.json(users);
+  const users = await User.find({}).populate("blogs", {
+    category: 1,
+    title: 1,
+    article: 1,
+    _id: 1,
   });
+
+  res.json(users);
 };
 
 // Find a user by ID
