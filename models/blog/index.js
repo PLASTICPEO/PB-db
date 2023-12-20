@@ -16,9 +16,24 @@ const blogSchema = new mongoose.Schema({
   title: String,
   article: String,
   important: Boolean,
-  user: {
+  likes: Number,
+  likes: {
+    type: Number,
+    default: 0,
+  },
+  likedBy: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
+  creator: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 

@@ -24,11 +24,13 @@ app.use(requestLogger);
 const authRouter = require("./routes/auth/index");
 const blogRouter = require("./routes/blog/index");
 const userRouter = require("./routes/user/index");
+const categoryRouter = require("./routes/category/index");
 
 // Define routes
 app.use("/api/auth", authRouter);
 app.use("/api/blog", blogRouter);
 app.use("/api/user", userRouter);
+app.use("/api/category", categoryRouter);
 
 // Route for the root path ("/")
 app.get("/", (request, response) => {

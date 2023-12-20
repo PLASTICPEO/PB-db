@@ -1,4 +1,6 @@
 // const generateAccessToken = require("../../middleware/tokenGenerator");
+const secretKey = process.env.JWT_SECRET;
+const jwt = require("jsonwebtoken");
 const User = require("../../models/user/index");
 
 // Create a new user
@@ -49,6 +51,7 @@ const getUsers = async (req, res) => {
   if (!token) {
     return res.status(401).json({ error: "Unauthorized: Token missing" });
   }
+
   const users = await User.find({}).populate("blogs", {
     category: 1,
     title: 1,
@@ -67,19 +70,21 @@ const getSingleUser = async (req, res) => {
     return res.status(401).json({ error: "Unauthorized: Token missing" });
   }
 
-  User.findById(req.params.id)
-    .then((user) => {
-      if (user) {
-        res.json(user);
-      } else {
-        res.status(404).end();
-      }
-    })
-    .catch((error) => {
-      console.log(error);
+  try {
+    const decoded = jwt.verify(token, secretKey);
 
-      res.status(400).send({ error: "malformatted id" });
-    });
+    // Find the user by ID
+    const user = await User.findById(decoded.userId);
+
+    if (user) {
+      res.json(user);
+    } else {
+      res.status(404).json({ error: "User not found" });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: "Invalid token or other error" });
+  }
 };
 
 module.exports = {
