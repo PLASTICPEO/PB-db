@@ -42,7 +42,26 @@ const categoryList = async (req, res) => {
   }
 };
 
+// Get a single category by name
+const getCategoryByName = async (req, res) => {
+  const { topic } = req.params;
+  console.log(topic);
+
+  try {
+    const category = await Category.findOne({ categories: topic });
+
+    if (!category) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    res.json(category);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   createCategory,
   categoryList,
+  getCategoryByName,
 };

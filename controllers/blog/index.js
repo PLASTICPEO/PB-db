@@ -56,12 +56,6 @@ const createBlog = async (req, res) => {
 
 // All blog
 const blogList = async (req, res) => {
-  const token = req.headers.authorization;
-
-  if (!token) {
-    return res.status(401).json({ error: "Unauthorized: Token missing" });
-  }
-
   try {
     const blogs = await Blog.find({}).populate("creator", {
       username: 1,
@@ -75,17 +69,19 @@ const blogList = async (req, res) => {
 
 // Single blog
 const singleBlog = async (req, res) => {
-  Blog.findById(req.params.id)
-    .then((note) => {
-      if (note) {
-        res.json(note);
-      } else {
-        res.status(404).end();
-      }
-    })
-    .catch((error) => {
-      res.status(400).send({ error: "malformatted id" });
+  try {
+    const blog = await Blog.findById(req.params.id).populate("creator", {
+      username: 1,
     });
+
+    if (blog) {
+      res.json(blog);
+    } else {
+      res.status(404).end();
+    }
+  } catch (error) {
+    res.status(400).json({ error: "malformatted id" });
+  }
 };
 
 // Update blog
@@ -177,24 +173,33 @@ const blogUnlike = async (req, res) => {
 // Delete the blog
 const blogDelete = async (req, res) => {
   const blogId = req.params.id;
-  const user = await User.findOne({ blogs: blogId });
-  await User.findByIdAndUpdate(user?._id, { $pull: { blogs: blogId } });
 
-  Blog.findByIdAndDelete(blogId)
-    .then((deletedBlog) => {
-      if (deletedBlog) {
-        res.json({ success: "Blog removed successfully" });
-        res.status(204).end();
-      } else {
-        res.status(404).json({ error: "Blog not found" });
-      }
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).json({ error: "Internal server error" });
-    });
+  try {
+    const user = await User.findOne({ blogs: blogId });
+
+    await User.findByIdAndUpdate(user?._id, { $pull: { blogs: blogId } });
+
+    const deletedBlog = await Blog.findByIdAndDelete(blogId);
+
+    if (!deletedBlog) {
+      return res.status(404).json({ error: "Blog not found" });
+    }
+
+    const category = await Category.findOne({ blogs: blogId });
+
+    if (category) {
+      await Category.findByIdAndUpdate(category._id, {
+        $pull: { blogs: blogId },
+      });
+    }
+
+    // Send success response
+    res.json({ success: "Blog removed successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
-
 module.exports = {
   createBlog,
   blogList,

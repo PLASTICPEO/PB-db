@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema({
       ref: "Blog",
     },
   ],
+  interests: [{ type: String }],
 });
 
 userSchema.set("toJSON", {

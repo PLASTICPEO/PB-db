@@ -15,18 +15,26 @@ const userCreate = async (request, response) => {
 
   try {
     // Check if the email is already registered
-    const existingUser = await User.findOne({ email: body.email });
-    if (existingUser) {
+    const existingEmail = await User.findOne({ email: body.email });
+    if (existingEmail) {
       return response
         .status(400)
         .json({ error: "Email is already registered" });
     }
 
+    const existingUsername = await User.findOne({ username: body.username });
+    if (existingUsername) {
+      return response
+        .status(400)
+        .json({ error: "Username is already registered" });
+    }
+    console.log();
     // Create a new user
     const newUser = new User({
       email: body.email,
       username: body.username,
       password: body.password,
+      interests: body.interests,
     });
 
     // Save the user to the database
@@ -87,7 +95,34 @@ const getSingleUser = async (req, res) => {
   }
 };
 
+// Me request
+const getMe = async (req, res) => {
+  const body = req.body;
+  const token = req.headers.authorization;
+
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized: Token missing" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, secretKey);
+
+    // Find the user by ID
+    const user = await User.findById(decoded.userId);
+
+    if (user) {
+      res.json(user);
+    } else {
+      res.status(404).json({ error: "User not found" });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: "Invalid token or other error" });
+  }
+};
+
 module.exports = {
+  getMe,
   userCreate,
   getUsers,
   getSingleUser,
