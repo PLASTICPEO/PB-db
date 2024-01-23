@@ -33,12 +33,22 @@ const createBlog = async (req, res) => {
     });
 
     const savedBlog = await newBlog.save();
-    user.blogs = user.blogs.concat(savedBlog._id.toString());
-    await user.save();
+
+    // Check if the user's interests include the blog's category
+    if (!user.interests.includes(body.category)) {
+      user.interests.push(body.category);
+      await user.save();
+    }
 
     const category = await Category.findOne({ categories: body.category });
 
     if (category) {
+      // Check if the user is not already in the category followers
+      if (!category.followers.includes(user._id)) {
+        category.followers.push(user._id);
+        await category.save();
+      }
+
       category.blogs = category.blogs.concat(savedBlog._id.toString());
       await category.save();
     } else {
@@ -50,19 +60,43 @@ const createBlog = async (req, res) => {
       status: "Blog added successfully",
     });
   } catch (error) {
+    console.error(error);
     res.status(400).json({ error: "Invalid token or other error" });
   }
 };
 
-// All blogs
 const allBlogList = async (req, res) => {
   try {
-    // Fetch all blogs
-    const blogs = await Blog.find({}).populate("creator", {
-      username: 1,
-    });
+    // Extracting query parameters
+    const page = parseInt(req.query.page) || 1; // default to page 1 if not provided
+    const blogsPerPage = parseInt(req.query.blogsPerPage) || 3;
 
-    res.json(blogs);
+    // Calculate skip value based on page and blogsPerPage
+    const skip = (page - 1) * blogsPerPage;
+
+    // Fetch total count of blogs
+    const totalRecords = await Blog.countDocuments();
+
+    // Fetch blogs with pagination
+    const blogs = await Blog.find({})
+      .populate("creator", { username: 1 })
+      .skip(skip)
+      .limit(blogsPerPage);
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalRecords / blogsPerPage);
+
+    // Prepare pagination information
+    const pagination = {
+      total_records: totalRecords,
+      current_page: page,
+      total_pages: totalPages,
+      next_page: page < totalPages ? page + 1 : null,
+      prev_page: page > 1 ? page - 1 : null,
+    };
+
+    // Include pagination information in the response
+    res.json({ blogs, pagination });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -70,25 +104,40 @@ const allBlogList = async (req, res) => {
 
 // Blogs created by the authorized user
 const userBlogList = async (req, res) => {
+  const userId = req.params.id;
+  const token = req.headers.authorization;
+
   try {
-    const token = req.headers.authorization;
+    // Extracting query parameters
+    const page = parseInt(req.query.page) || 1; // default to page 1 if not provided
+    const blogsPerPage = parseInt(req.query.blogsPerPage) || 1;
 
-    if (!token) {
-      return res.status(401).json({ error: "Unauthorized: Token missing" });
-    }
+    // Calculate skip value based on page and blogsPerPage
+    const skip = (page - 1) * blogsPerPage;
 
-    // Decode the token to get user information
-    const decoded = jwt.verify(token, secretKey);
+    // Fetch total count of blogs for the user
+    const totalRecords = await Blog.countDocuments({ creator: userId });
 
-    // Fetch blogs created by the authorized user
-    const blogs = await Blog.find({ creator: decoded.userId }).populate(
-      "creator",
-      {
-        username: 1,
-      }
-    );
+    // Fetch user's blogs with pagination
+    const blogs = await Blog.find({ creator: userId })
+      .populate("creator", { username: 1 })
+      .skip(skip)
+      .limit(blogsPerPage);
 
-    res.json(blogs);
+    // Calculate total pages for the user's blogs
+    const totalPages = Math.ceil(totalRecords / blogsPerPage);
+
+    // Prepare pagination information
+    const pagination = {
+      total_records: totalRecords,
+      current_page: page,
+      total_pages: totalPages,
+      next_page: page < totalPages ? page + 1 : null,
+      prev_page: page > 1 ? page - 1 : null,
+    };
+
+    // Include pagination information in the response
+    res.json({ blogs, pagination });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -109,14 +158,40 @@ const userInterestedBlogs = async (req, res) => {
     const user = await User.findById(decoded.userId);
     const userInterests = user.interests;
 
-    // Fetch blogs with matching interests
-    const blogs = await Blog.find({
+    // Extracting query parameters for pagination
+    const page = parseInt(req.query.page) || 1; // default to page 1 if not provided
+    const blogsPerPage = parseInt(req.query.blogsPerPage) || 1;
+
+    // Calculate skip value based on page and blogsPerPage
+    const skip = (page - 1) * blogsPerPage;
+
+    // Fetch total count of blogs for the user's interests
+    const totalRecords = await Blog.countDocuments({
       category: { $in: userInterests },
-    }).populate("creator", {
-      username: 1,
     });
 
-    res.json(blogs);
+    // Fetch blogs with matching interests and pagination
+    const blogs = await Blog.find({
+      category: { $in: userInterests },
+    })
+      .populate("creator", { username: 1 })
+      .skip(skip)
+      .limit(blogsPerPage);
+
+    // Calculate total pages for the user's interested blogs
+    const totalPages = Math.ceil(totalRecords / blogsPerPage);
+
+    // Prepare pagination information
+    const pagination = {
+      total_records: totalRecords,
+      current_page: page,
+      total_pages: totalPages,
+      next_page: page < totalPages ? page + 1 : null,
+      prev_page: page > 1 ? page - 1 : null,
+    };
+
+    // Include pagination information in the response
+    res.json({ blogs, pagination });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -126,14 +201,19 @@ const userInterestedBlogs = async (req, res) => {
 const getBlogsByCategory = async (req, res) => {
   const { categoryName } = req.params;
 
-  console.log(req.params);
-
   try {
     if (!categoryName) {
       return res
         .status(400)
         .json({ error: "Invalid or missing category name" });
     }
+
+    // Extracting query parameters for pagination
+    const page = parseInt(req.query.page) || 1; // default to page 1 if not provided
+    const blogsPerPage = parseInt(req.query.blogsPerPage) || 1;
+
+    // Calculate skip value based on page and blogsPerPage
+    const skip = (page - 1) * blogsPerPage;
 
     // Find the category by name
     const category = await Category.findOne({ categories: categoryName });
@@ -145,13 +225,29 @@ const getBlogsByCategory = async (req, res) => {
     // Extract blog IDs from the category
     const blogIds = category.blogs;
 
-    // Fetch the blogs using the extracted IDs
-    const blogs = await Blog.find({ _id: { $in: blogIds } }).populate(
-      "creator",
-      { username: 1 }
-    );
+    // Fetch the total count of blogs for the category
+    const totalRecords = blogIds.length;
 
-    res.json(blogs);
+    // Fetch the blogs with pagination using the extracted IDs
+    const blogs = await Blog.find({ _id: { $in: blogIds } })
+      .populate("creator", { username: 1 })
+      .skip(skip)
+      .limit(blogsPerPage);
+
+    // Calculate total pages for the category's blogs
+    const totalPages = Math.ceil(totalRecords / blogsPerPage);
+
+    // Prepare pagination information
+    const pagination = {
+      total_records: totalRecords,
+      current_page: page,
+      total_pages: totalPages,
+      next_page: page < totalPages ? page + 1 : null,
+      prev_page: page > 1 ? page - 1 : null,
+    };
+
+    // Include pagination information in the response
+    res.json({ blogs, pagination });
   } catch (error) {
     console.error("Error fetching blogs by category:", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -291,6 +387,21 @@ const blogDelete = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+const getTopBlogs = async (req, res) => {
+  try {
+    const topBlogs = await Blog.find()
+      .sort({ likes: -1 })
+      .limit(6)
+      .populate("creator", { username: 1 });
+
+    res.json(topBlogs);
+  } catch (error) {
+    console.error("Error fetching top blogs:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 module.exports = {
   createBlog,
   userBlogList,
@@ -302,4 +413,5 @@ module.exports = {
   updateBlog,
   blogLike,
   blogUnlike,
+  getTopBlogs,
 };

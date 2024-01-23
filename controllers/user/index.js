@@ -2,6 +2,7 @@
 const secretKey = process.env.JWT_SECRET;
 const jwt = require("jsonwebtoken");
 const User = require("../../models/user/index");
+const Category = require("../../models/category/index");
 
 // Create a new user
 const userCreate = async (request, response) => {
@@ -22,13 +23,14 @@ const userCreate = async (request, response) => {
         .json({ error: "Email is already registered" });
     }
 
+    // Check if the username is already registered
     const existingUsername = await User.findOne({ username: body.username });
     if (existingUsername) {
       return response
         .status(400)
         .json({ error: "Username is already registered" });
     }
-    console.log();
+
     // Create a new user
     const newUser = new User({
       email: body.email,
@@ -40,8 +42,22 @@ const userCreate = async (request, response) => {
     // Save the user to the database
     await newUser.save();
 
-    // Generate and return an access token
-    // const accessToken = generateAccessToken({ username: newUser.username });
+    // Update the categories with the user's ID in the followers array
+
+    for (const interest of body.interests) {
+      const category = await Category.findOne({ categories: interest });
+
+      console.log(category, "კატეგორი");
+
+      if (category) {
+        if (!category.followers.includes(newUser._id)) {
+          category.followers.push(newUser._id);
+          await category.save();
+        }
+      } else {
+        console.error("Category not found:", interest);
+      }
+    }
 
     response.json({
       message: "User registered successfully",
@@ -72,17 +88,11 @@ const getUsers = async (req, res) => {
 
 // Find a user by ID
 const getSingleUser = async (req, res) => {
-  const token = req.headers.authorization;
-
-  if (!token) {
-    return res.status(401).json({ error: "Unauthorized: Token missing" });
-  }
+  const userId = req.params.userID;
 
   try {
-    const decoded = jwt.verify(token, secretKey);
-
     // Find the user by ID
-    const user = await User.findById(decoded.userId);
+    const user = await User.findById(userId);
 
     if (user) {
       res.json(user);

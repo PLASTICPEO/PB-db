@@ -1,4 +1,5 @@
 const Category = require("../../models/category/index");
+const User = require("../../models/user/index");
 
 const createCategory = async (req, res) => {
   const { category } = req.body;
@@ -45,7 +46,6 @@ const categoryList = async (req, res) => {
 // Get a single category by name
 const getCategoryByName = async (req, res) => {
   const { topic } = req.params;
-  console.log(topic);
 
   try {
     const category = await Category.findOne({ categories: topic });
@@ -60,8 +60,49 @@ const getCategoryByName = async (req, res) => {
   }
 };
 
+const getFollowersCount = async (req, res) => {
+  const { topic } = req.params;
+
+  try {
+    const category = await Category.findOne({ categories: topic });
+
+    if (!category) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    const followersCount = category.followers.length;
+
+    res.json({ followersCount });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const removeFollower = async (req, res) => {
+  const { category, userId } = req.params;
+
+  try {
+    // Find the category
+    const findCategory = await Category.findOne({ categories: category });
+
+    if (!findCategory) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    // Remove the user's ID from followers
+    findCategory.followers.pull(userId);
+    await findCategory.save();
+
+    res.json({ status: "Follower removed successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   createCategory,
   categoryList,
   getCategoryByName,
+  getFollowersCount,
+  removeFollower,
 };

@@ -14,6 +14,12 @@ mongoose
 // Define the category schema
 const categorySchema = new mongoose.Schema({
   categories: String,
+  followers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
   blogs: [
     {
       type: mongoose.Schema.Types.ObjectId,
