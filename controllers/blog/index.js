@@ -319,6 +319,12 @@ const blogLike = async (req, res) => {
     );
 
     if (updatedBlog) {
+      // Check if the blog's category is not in the user's interests
+      if (!user.interests.includes(updatedBlog.category)) {
+        user.interests.push(updatedBlog.category);
+        await user.save();
+      }
+
       res.json(updatedBlog);
     } else {
       res.status(404).json({ error: "Blog not found" });
