@@ -357,6 +357,29 @@ const blogUnlike = async (req, res) => {
   }
 };
 
+// In your controllers file (blogController.js)
+const isBlogLiked = async (req, res) => {
+  const blogId = req.params.id;
+  const token = req.headers.authorization;
+
+  try {
+    // Decode the token to get user information
+    const decoded = jwt.verify(token, secretKey);
+
+    // Check if the blog is liked by the user
+    const user = await User.findById(decoded.userId);
+    const userId = user._id.toString();
+
+    const blog = await Blog.findById(blogId);
+    const isLiked = blog.likedBy.includes(userId);
+
+    res.json({ isLiked });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 // Delete the blog
 const blogDelete = async (req, res) => {
   const blogId = req.params.id;
@@ -413,5 +436,6 @@ module.exports = {
   updateBlog,
   blogLike,
   blogUnlike,
+  isBlogLiked,
   getTopBlogs,
 };

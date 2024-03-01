@@ -13,6 +13,7 @@ blogRouter.post("/add", blogController.createBlog);
 blogRouter.put("/update/:id", blogController.updateBlog);
 blogRouter.put("/like/:id", blogController.blogLike);
 blogRouter.put("/unlike/:id", blogController.blogUnlike);
+blogRouter.get("/is-liked/:id", blogController.isBlogLiked);
 blogRouter.delete("/remove/:id", blogController.blogDelete);
 
 module.exports = blogRouter;
