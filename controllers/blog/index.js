@@ -378,6 +378,7 @@ const isBlogLiked = async (req, res) => {
 
     const blog = await Blog.findById(blogId);
     const isLiked = blog.likedBy.includes(userId);
+    console.log(isLiked, "ჩეკიი");
 
     res.json({ isLiked });
   } catch (error) {
@@ -424,7 +425,21 @@ const getTopBlogs = async (req, res) => {
       .limit(6)
       .populate("creator", { username: 1 });
 
-    res.json(topBlogs);
+    // Add position information to each blog in the response
+    const blogsWithPosition = topBlogs.map((blog, index) => ({
+      ...blog.toObject(),
+      position: index + 1, // Adding 1 to start indexing from 1
+    }));
+
+    const trendingBlog =
+      blogsWithPosition.length > 0 ? blogsWithPosition[0] : null;
+    const totalBlogs = await Blog.countDocuments();
+
+    res.json({
+      totalBlogs: totalBlogs,
+      trendingBlog: trendingBlog,
+      topBlogs: blogsWithPosition,
+    });
   } catch (error) {
     console.error("Error fetching top blogs:", error.message);
     res.status(500).json({ error: "Internal server error" });
